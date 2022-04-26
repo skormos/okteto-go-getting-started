@@ -13,7 +13,7 @@ func NewHelloHandler(logCtx zerolog.Context) http.Handler {
 		Logger()
 
 	return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
-		if _, err := writer.Write([]byte("Hello World!")); err != nil {
+		if _, err := writer.Write([]byte("Hello Worldeee!")); err != nil {
 			logger.Err(err).Msg("while trying to server Hello World request")
 
 			http.Error(writer, "Could not complete hello world request.", http.StatusInternalServerError)
