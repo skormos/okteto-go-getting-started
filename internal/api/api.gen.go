@@ -11,6 +11,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// Greeting defines model for Greeting.
+type Greeting struct {
+	// The full response given the input name.
+	Greeting string `json:"greeting"`
+}
+
 // SayHelloParams defines parameters for SayHello.
 type SayHelloParams struct {
 	// The name for which to say Hello to. 'World' is the default if not provided or is empty.

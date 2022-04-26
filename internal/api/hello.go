@@ -1,23 +1,45 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/rs/zerolog"
 )
 
-// NewHelloHandler creates a new http Handler that responds with Hello World, and an error if something is wrong.
-func NewHelloHandler(logCtx zerolog.Context) http.Handler {
+type (
+	helloSayer interface {
+		SayHello(w http.ResponseWriter, r *http.Request, params SayHelloParams)
+	}
+
+	sayHelloHandler struct {
+		logger zerolog.Logger
+	}
+)
+
+func newSayHelloHandler(logCtx zerolog.Context) sayHelloHandler {
 	logger := logCtx.Str("module", "http").
 		Str("handler", "hello").
 		Logger()
 
-	return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
-		if _, err := writer.Write([]byte("Hello Worldeee!")); err != nil {
-			logger.Err(err).Msg("while trying to server Hello World request")
+	return sayHelloHandler{
+		logger: logger,
+	}
+}
 
-			http.Error(writer, "Could not complete hello world request.", http.StatusInternalServerError)
-			return
-		}
-	})
+func (s sayHelloHandler) SayHello(w http.ResponseWriter, _ *http.Request, params SayHelloParams) {
+	name := "World"
+	if params.Name != nil && strings.TrimSpace(*params.Name) != "" {
+		name = strings.TrimSpace(*params.Name)
+	}
+
+	response := Greeting{
+		Greeting: fmt.Sprintf("Hello %s!", name),
+	}
+
+	if err := respond(w, &response, http.StatusOK); err != nil {
+		s.logger.Err(err).Msgf("while responding with %v", response)
+		http.Error(w, "Could not complete hello world request.", http.StatusInternalServerError)
+	}
 }

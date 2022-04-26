@@ -22,7 +22,7 @@ func main() {
 	serverErrors := make(chan error, 1)
 
 	httpOptions := newHTTPServerOptions("8080")
-	httpServer := newHTTPServerWrapper(logCtx, httpOptions, helloHandler(logCtx), serverErrors)
+	httpServer := newHTTPServerWrapper(logCtx, httpOptions, apiHandler(logCtx), serverErrors)
 
 	select {
 	case err := <-serverErrors:

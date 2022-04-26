@@ -10,6 +10,27 @@
       "url": "http://localhost:8080"
     }
   ],
+  "components": {
+    "responses": {
+      "Greeting": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["greeting"],
+              "properties": {
+                "greeting": {
+                  "type": "string",
+                  "description": "The full response given the input name."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "paths": {
     "/api/hello": {
       "get": {
@@ -32,20 +53,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "greeting": {
-                      "type": "string",
-                      "description": "The full response given the input name."
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/Greeting"
           }
         }
       }
