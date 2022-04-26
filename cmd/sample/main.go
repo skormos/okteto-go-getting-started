@@ -1,16 +1,29 @@
 package main
 
 import (
-	"fmt"
+	"net"
 	"net/http"
+	"os"
+
+	"github.com/rs/zerolog"
 )
 
 func main() {
-	fmt.Println("Starting hello-world server...")
+	logCtx := zerolog.New(os.Stdout).
+		With().
+		Timestamp().
+		Caller().
+		Stack()
 
-	http.Handle("/", helloHandler())
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		panic(err)
+	mainLogger := logCtx.Str("module", "main").
+		Logger()
+
+	port := "8080"
+	mainLogger.Info().Msgf("Starting http server on port %s", port)
+
+	http.Handle("/", helloHandler(logCtx))
+	if err := http.ListenAndServe(net.JoinHostPort("", port), nil); err != nil {
+		mainLogger.Panic().Err(err).Msg("while starting http server")
 	}
 
 }

@@ -5,6 +5,8 @@
 *.so
 *.dylib
 
+sampled
+
 # vendor folders
 vendor
 
