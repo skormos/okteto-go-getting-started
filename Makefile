@@ -6,6 +6,10 @@ compile:
 	go build -o sampled ./cmd/sample/...
 .PHONY: compile
 
+gen:
+	go generate ./...
+.PHONY: gen
+
 prepare:
 	go mod download
 	go mod tidy
@@ -16,7 +20,7 @@ test:
 .PHONY: test
 
 lint:
-	@goimports -l -local "github.com/okteto" -w
+	@goimports -local "github.com/okteto" -w -l .
 	@golangci-lint run --out-format github-actions ./...
 .PHONY: lint
 

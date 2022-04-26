@@ -1,0 +1,9 @@
+# Referenced from `gen.sh` this makes it much easier to configure the call to deepmap without too many confusing
+# variables and escape characters.
+
+output:
+  api.gen.go
+generate:
+  - types
+  - chi-server
+  - skip-prune
