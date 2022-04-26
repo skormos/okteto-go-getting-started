@@ -1,0 +1,54 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Okteto - Getting Started",
+    "description": "A modification of the Getting Started project to test development workflow with Okteto.",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "paths": {
+    "/api/hello": {
+      "get": {
+        "summary": "Says hello to whomever you provide in the query parameter.",
+        "description": "Allows callers to get a pleasant greeting as a response with the name provided in the query or default World if not provided.",
+        "operationId": "SayHello",
+        "security": [],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "The name for which to say Hello to. 'World' is the default if not provided or is empty.",
+            "schema": {
+              "type": "string",
+              "example": "Henrietta"
+            },
+            "allowEmptyValue": true,
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "greeting": {
+                      "type": "string",
+                      "description": "The full response given the input name."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
