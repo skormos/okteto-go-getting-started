@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -21,7 +22,7 @@ type (
 	Pod struct {
 		Name     string
 		Age      string
-		Restarts int
+		Restarts int32
 	}
 )
 
@@ -49,14 +50,19 @@ func (o *ClusterOps) ListPods(ctx context.Context, namespace string) ([]Pod, err
 		createTime := podItem.GetCreationTimestamp().Time
 		ageDuration := time.Since(createTime)
 
-		for _, container := range podItem.Spec.Containers {
+		restartCount := int32(0)
+
+		for _, container := range podItem.Status.ContainerStatuses {
 			o.logger.Info().Msgf("Pod %s Container %s", podItem.GetName(), container.Name)
+			if strings.HasPrefix(podItem.GetName(), container.Name) {
+				restartCount = container.RestartCount
+			}
 		}
 
 		pods = append(pods, Pod{
 			Name:     podItem.GetName(),
 			Age:      ageDuration.String(),
-			Restarts: 3000,
+			Restarts: restartCount,
 		})
 	}
 

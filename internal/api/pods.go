@@ -16,7 +16,7 @@ const (
 	podsListSortRestarts ListPodsParamsSort = "restarts"
 )
 
-var validpodListSortFields = map[ListPodsParamsSort]struct{}{
+var validPodListSortFields = map[ListPodsParamsSort]struct{}{
 	podsListSortAge:      {},
 	podsListSortName:     {},
 	podsListSortRestarts: {},
@@ -32,6 +32,8 @@ type (
 		logger     zerolog.Logger
 		podsLister PodsLister
 	}
+
+	listPodsParamsWrapper ListPodsParams
 )
 
 func newPodsHandler(logCtx zerolog.Context, podsLister PodsLister) podsHandler {
@@ -49,15 +51,12 @@ func (p podsHandler) ListPods(w http.ResponseWriter, r *http.Request, namespace 
 	//nolint:godox // ignore FIXMEs
 	//FIXME use a validator library to validate the params schema
 
-	sort := podsListSortName
-	if params.Sort != nil {
-		if _, isValid := validpodListSortFields[*params.Sort]; !isValid {
-			http.Error(w, fmt.Errorf("sort query value %s is invalid", *params.Sort).Error(), http.StatusBadRequest)
-			return
-		}
-		sort = *params.Sort
+	paramsWrapper := listPodsParamsWrapper(params)
+	sort, err := paramsWrapper.sort()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-
 	p.logger.Info().Msgf("sort called %s", sort)
 
 	pods, err := p.podsLister.ListPods(r.Context(), string(namespace))
@@ -65,9 +64,55 @@ func (p podsHandler) ListPods(w http.ResponseWriter, r *http.Request, namespace 
 		p.logger.Err(err).Msg("while executing pods")
 	}
 
-	if err := respond(w, len(pods), http.StatusOK); err != nil {
+	if err := respond(w, listPodsResponse(paramsWrapper, pods), http.StatusOK); err != nil {
 		p.logger.Err(err).Msg("while responding to list pods")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+}
+
+func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) ListPodsResponse {
+
+	pods := make([]Pod, 0, len(input))
+	for _, p := range input {
+		pods = append(pods, Pod{
+			Age:      p.Age,
+			Name:     p.Name,
+			Restarts: int(p.Restarts),
+		})
+	}
+
+	return ListPodsResponse{
+		Limit:  params.limit(),
+		Offset: params.offset(),
+		Pods:   pods,
+		Total:  TotalRecords(len(pods)),
+	}
+}
+
+func (p listPodsParamsWrapper) offset() RecordOffset {
+	if p.Offset != nil {
+		return *p.Offset
+	}
+
+	return 0
+}
+
+func (p listPodsParamsWrapper) limit() RecordLimit {
+	if p.Limit != nil {
+		return *p.Limit
+	}
+
+	return 100
+}
+
+func (p listPodsParamsWrapper) sort() (ListPodsParamsSort, error) {
+	if p.Sort != nil {
+		if _, isValid := validPodListSortFields[*p.Sort]; !isValid {
+			return "", fmt.Errorf("sort query value %s is invalid", *p.Sort)
+		}
+		return *p.Sort, nil
+	}
+
+	return podsListSortName, nil
 }
