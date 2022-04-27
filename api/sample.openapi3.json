@@ -11,6 +11,18 @@
     }
   ],
   "components": {
+    "parameters": {
+      "namespacePath": {
+        "name": "namespace",
+        "in": "path",
+        "required": true,
+        "allowEmptyValue": false,
+        "description": "The namespace for which to list the pods.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
     "responses": {
       "Greeting": {
         "description": "OK",
@@ -26,6 +38,76 @@
                 }
               }
             }
+          }
+        }
+      },
+      "ListPodsResponse": {
+        "description": "Lists the pods for this namespace",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["pods", "limit", "offset", "total"],
+              "properties": {
+                "pods": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/pod"
+                  }
+                },
+                "limit": {
+                  "$ref": "#/components/schemas/recordLimit"
+                },
+                "offset": {
+                  "$ref": "#/components/schemas/recordOffset"
+                },
+                "total": {
+                  "$ref": "#/components/schemas/totalRecords"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "recordLimit": {
+        "type": "integer",
+        "description": "indicates the number of records per response",
+        "default": 10,
+        "minimum": 1,
+        "example": 10
+      },
+      "recordOffset": {
+        "type": "integer",
+        "description": "indicates the number of records a response is offset by, given the sorting of the result set",
+        "default": 0,
+        "minimum": 0,
+        "example": 150
+      },
+      "totalRecords": {
+        "type": "integer",
+        "description": "indicates the total number of records that can be returned in a query",
+        "example": 234
+      },
+      "pod": {
+        "type": "object",
+        "required": ["name", "age", "restarts"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "the name assigned to this pod by the cluster",
+            "example": "sampleapp-v1-28af721"
+          },
+          "age": {
+            "type": "string",
+            "description": "the uptime age of the pod as a string",
+            "example": "2h48m"
+          },
+          "restarts": {
+            "type": "integer",
+            "description": "the number of times this pod has been restarted since it was first deployed",
+            "example": 3
           }
         }
       }
@@ -54,6 +136,52 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/Greeting"
+          }
+        }
+      }
+    },
+    "/api/cluster/{namespace}/pod": {
+      "get": {
+        "summary": "List the pods in this namespace.",
+        "description": "List the pods that are in the same namespace as the app that was deployed",
+        "operationId": "ListPods",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/namespacePath"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "allows callers to specify the number of records to return per result set. Default is 10",
+            "allowEmptyValue": false,
+            "schema": {
+              "$ref": "#/components/schemas/recordLimit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "allows callers to specify how many records to start from, given the offset. Default is 0.",
+            "allowEmptyValue": false,
+            "schema": {
+              "$ref": "#/components/schemas/recordOffset"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "allows callers to sort the result set. Default is name. Current order is ascending.",
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "string",
+              "enum": ["age","name","restarts"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ListPodsResponse"
           }
         }
       }

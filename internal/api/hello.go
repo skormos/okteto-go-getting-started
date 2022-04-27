@@ -41,5 +41,6 @@ func (s sayHelloHandler) SayHello(w http.ResponseWriter, _ *http.Request, params
 	if err := respond(w, &response, http.StatusOK); err != nil {
 		s.logger.Err(err).Msgf("while responding with %v", response)
 		http.Error(w, "Could not complete hello world request.", http.StatusInternalServerError)
+		return
 	}
 }

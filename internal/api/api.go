@@ -10,17 +10,23 @@ import (
 )
 
 type (
+	apiPodsGetter interface {
+		ListPods(w http.ResponseWriter, r *http.Request, namespace NamespacePath, params ListPodsParams)
+	}
+
 	api struct {
 		helloSayer
+		apiPodsGetter
 	}
 )
 
 // New creates a new router to handle requests to the api.
-func New(logCtx zerolog.Context) http.Handler {
+func New(logCtx zerolog.Context, podsLister PodsLister) http.Handler {
 	logger := logCtx.Str("module", "http").Logger()
 
 	si := api{
-		helloSayer: newSayHelloHandler(logCtx),
+		helloSayer:    newSayHelloHandler(logCtx),
+		apiPodsGetter: newPodsHandler(logCtx, podsLister),
 	}
 
 	return HandlerWithOptions(si, ChiServerOptions{

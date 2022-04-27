@@ -11,11 +11,63 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// Pod defines model for pod.
+type Pod struct {
+	// the uptime age of the pod as a string
+	Age string `json:"age"`
+
+	// the name assigned to this pod by the cluster
+	Name string `json:"name"`
+
+	// the number of times this pod has been restarted since it was first deployed
+	Restarts int `json:"restarts"`
+}
+
+// indicates the number of records per response
+type RecordLimit int
+
+// indicates the number of records a response is offset by, given the sorting of the result set
+type RecordOffset int
+
+// indicates the total number of records that can be returned in a query
+type TotalRecords int
+
+// NamespacePath defines model for namespacePath.
+type NamespacePath string
+
 // Greeting defines model for Greeting.
 type Greeting struct {
 	// The full response given the input name.
 	Greeting string `json:"greeting"`
 }
+
+// ListPodsResponse defines model for ListPodsResponse.
+type ListPodsResponse struct {
+	// indicates the number of records per response
+	Limit RecordLimit `json:"limit"`
+
+	// indicates the number of records a response is offset by, given the sorting of the result set
+	Offset RecordOffset `json:"offset"`
+	Pods   []Pod        `json:"pods"`
+
+	// indicates the total number of records that can be returned in a query
+	Total TotalRecords `json:"total"`
+}
+
+// ListPodsParams defines parameters for ListPods.
+type ListPodsParams struct {
+	// allows callers to specify the number of records to return per result set. Default is 10
+	Limit *RecordLimit `json:"limit,omitempty"`
+
+	// allows callers to specify how many records to start from, given the offset. Default is 0.
+	Offset *RecordOffset `json:"offset,omitempty"`
+
+	// allows callers to sort the result set. Default is name. Current order is ascending.
+	Sort *ListPodsParamsSort `json:"sort,omitempty"`
+}
+
+// ListPodsParamsSort defines parameters for ListPods.
+type ListPodsParamsSort string
 
 // SayHelloParams defines parameters for SayHello.
 type SayHelloParams struct {
@@ -25,6 +77,9 @@ type SayHelloParams struct {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List the pods in this namespace.
+	// (GET /api/cluster/{namespace}/pod)
+	ListPods(w http.ResponseWriter, r *http.Request, namespace NamespacePath, params ListPodsParams)
 	// Says hello to whomever you provide in the query parameter.
 	// (GET /api/hello)
 	SayHello(w http.ResponseWriter, r *http.Request, params SayHelloParams)
@@ -38,6 +93,68 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+
+// ListPods operation middleware
+func (siw *ServerInterfaceWrapper) ListPods(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace NamespacePath
+
+	err = runtime.BindStyledParameter("simple", false, "namespace", chi.URLParam(r, "namespace"), &namespace)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPodsParams
+
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+	if paramValue := r.URL.Query().Get("sort"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", r.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPods(w, r, namespace, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
 
 // SayHello operation middleware
 func (siw *ServerInterfaceWrapper) SayHello(w http.ResponseWriter, r *http.Request) {
@@ -183,6 +300,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/cluster/{namespace}/pod", wrapper.ListPods)
+	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/hello", wrapper.SayHello)
 	})

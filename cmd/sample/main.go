@@ -21,8 +21,17 @@ func main() {
 	shutdown := listenForShutdown()
 	serverErrors := make(chan error, 1)
 
+	k8sClient, err := k8sInClusterClient()
+	if err != nil {
+		mainLogger.Panic().Err(err).Msg("while initializing kubernetes client")
+	}
+	clusterOps, err := newClusterOps(logCtx, k8sClient)
+	if err != nil {
+		mainLogger.Panic().Err(err).Msg("while initializing ClusterOps logic")
+	}
+
 	httpOptions := newHTTPServerOptions("8080")
-	httpServer := newHTTPServerWrapper(logCtx, httpOptions, apiHandler(logCtx), serverErrors)
+	httpServer := newHTTPServerWrapper(logCtx, httpOptions, apiHandler(logCtx, clusterOps), serverErrors)
 
 	select {
 	case err := <-serverErrors:
