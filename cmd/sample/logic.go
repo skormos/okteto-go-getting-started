@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/okteto/go-getting-started/internal/logic/cluster"
 	"github.com/rs/zerolog"
 	core "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/okteto/go-getting-started/internal/logic/cluster"
 )
 
 func newClusterOps(logCtx zerolog.Context, k8sCoreClient core.CoreV1Interface) (*cluster.ClusterOps, error) {
