@@ -1,4 +1,4 @@
-name: hello-world
+name: okteto-sample
 image: okteto/golang:1
 command: bash
 securityContext:
