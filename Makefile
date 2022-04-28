@@ -32,3 +32,6 @@ debug:
 	dlv debug --headless --listen=:2345 --log --api-version=2
 .PHONY: debug
 
+build-image:
+	okteto build -t okteto.dev/okteto-sample .
+.PHONY: build-image

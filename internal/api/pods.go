@@ -72,11 +72,26 @@ func (p podsHandler) ListPods(w http.ResponseWriter, r *http.Request, namespace 
 
 func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) (ListPodsResponse, error) {
 
+	//nolint:godox // FIXMEs are fine for now
+	//FIXME offsetting past the total inputs causes a panic later. Implement a more simple way to calculate the size of each page.
+	// check if offset is past array index
+	offset := int(params.offset())
+	if offset > len(input) {
+		return ListPodsResponse{
+			Limit:  params.limit(),
+			Offset: params.offset(),
+			Pods:   []Pod{},
+			Total:  TotalRecords(len(input)),
+		}, nil
+	}
+
+	// sort the pods according to the requested field
 	sorted, err := sortPods(input, params.sort())
 	if err != nil {
 		return ListPodsResponse{}, err
 	}
 
+	// set size of the response
 	size := int(params.limit())
 	if size > len(input) {
 		size = len(input)
@@ -84,7 +99,7 @@ func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) (ListPo
 
 	pods := make([]Pod, 0, size)
 	for i := 0; i < size; i++ {
-		p := sorted[i+int(params.offset())]
+		p := sorted[i+offset]
 		pods = append(pods, Pod{
 			Age:      p.Age,
 			Name:     p.Name,
@@ -96,7 +111,7 @@ func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) (ListPo
 		Limit:  params.limit(),
 		Offset: params.offset(),
 		Pods:   pods,
-		Total:  TotalRecords(len(pods)),
+		Total:  TotalRecords(len(input)),
 	}, nil
 }
 
