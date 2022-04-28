@@ -64,8 +64,8 @@ func TestSayHelloHandler_SayHello(t *testing.T) {
 	}
 }
 
-func testLoggerContext(tt *testing.T) zerolog.Context {
-	tt.Helper()
+func testLoggerContext(t *testing.T) zerolog.Context {
+	t.Helper()
 	return zerolog.New(bytes.NewBuffer(make([]byte, 0))).With()
 }
 

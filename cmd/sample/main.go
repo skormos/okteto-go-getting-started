@@ -21,11 +21,11 @@ func main() {
 	shutdown := listenForShutdown()
 	serverErrors := make(chan error, 1)
 
-	k8sClient, err := k8sInClusterClient()
+	k8sCoreClient, err := k8sInClusterCoreClient()
 	if err != nil {
 		mainLogger.Panic().Err(err).Msg("while initializing kubernetes client")
 	}
-	clusterOps, err := newClusterOps(logCtx, k8sClient)
+	clusterOps, err := newClusterOps(logCtx, k8sCoreClient)
 	if err != nil {
 		mainLogger.Panic().Err(err).Msg("while initializing ClusterOps logic")
 	}

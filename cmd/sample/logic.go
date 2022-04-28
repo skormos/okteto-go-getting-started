@@ -3,14 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/rs/zerolog"
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/okteto/go-getting-started/internal/logic/cluster"
+	"github.com/rs/zerolog"
+	core "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-func newClusterOps(logCtx zerolog.Context, k8sClient *kubernetes.Clientset) (*cluster.ClusterOps, error) {
-	clusterOps, err := cluster.New(logCtx, k8sClient)
+func newClusterOps(logCtx zerolog.Context, k8sCoreClient core.CoreV1Interface) (*cluster.ClusterOps, error) {
+	clusterOps, err := cluster.New(logCtx, k8sCoreClient)
 	if err != nil {
 		return nil, fmt.Errorf("while creating a ClusterOps wrapper %w", err)
 	}

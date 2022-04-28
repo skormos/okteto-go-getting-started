@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )
 
-func k8sInClusterClient() (*kubernetes.Clientset, error) {
+func k8sInClusterCoreClient() (v1.CoreV1Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("while initializing InClusterConfig %w", err)
@@ -18,5 +19,5 @@ func k8sInClusterClient() (*kubernetes.Clientset, error) {
 		return nil, fmt.Errorf("while initializing ClientSet for InClusterConfig %w", err)
 	}
 
-	return client, nil
+	return client.CoreV1(), nil
 }

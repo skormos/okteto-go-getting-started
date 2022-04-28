@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	core "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 type (
 	// ClusterOps manages operations for a kubernetes cluster
 	ClusterOps struct { //nolint:revive // yeah, this stutters. Will fix when a better name comes to mind.
 		logger zerolog.Logger
-		client *kubernetes.Clientset
+		client core.CoreV1Interface
 	}
 
 	// Pod is a simple representation of a Pod
@@ -27,7 +27,7 @@ type (
 )
 
 // New creates a new instance of ClusterOps given the client set.
-func New(logCtx zerolog.Context, client *kubernetes.Clientset) (*ClusterOps, error) {
+func New(logCtx zerolog.Context, client core.CoreV1Interface) (*ClusterOps, error) {
 	logger := logCtx.Str("module", "logic").
 		Str("handler", "kubernetes-cluster").
 		Logger()
@@ -40,7 +40,7 @@ func New(logCtx zerolog.Context, client *kubernetes.Clientset) (*ClusterOps, err
 
 // ListPods gets all the pods in the provided namespace for the given cluster.
 func (o *ClusterOps) ListPods(ctx context.Context, namespace string) ([]Pod, error) {
-	list, err := o.client.CoreV1().Pods(namespace).List(ctx, v1.ListOptions{})
+	list, err := o.client.Pods(namespace).List(ctx, meta.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get pod list for namespace %s: %w", namespace, err)
 	}
