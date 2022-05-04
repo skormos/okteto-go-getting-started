@@ -72,11 +72,10 @@ func (p podsHandler) ListPods(w http.ResponseWriter, r *http.Request, namespace 
 
 func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) (ListPodsResponse, error) {
 
-	//nolint:godox // FIXMEs are fine for now
-	//FIXME offsetting past the total inputs causes a panic later. Implement a more simple way to calculate the size of each page.
-	// check if offset is past array index
 	offset := int(params.offset())
-	if offset > len(input) {
+
+	// if offset is past the last record
+	if offset >= len(input) {
 		return ListPodsResponse{
 			Limit:  params.limit(),
 			Offset: params.offset(),
@@ -91,17 +90,17 @@ func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) (ListPo
 		return ListPodsResponse{}, err
 	}
 
-	// set size of the response
-	size := int(params.limit())
-	if size > len(input) {
-		size = len(input)
+	endIdx := offset + int(params.limit())
+	// if the limit is passed the last record, get the last record
+	if endIdx > len(input) {
+		endIdx = len(input)
 	}
 
-	pods := make([]Pod, 0, size)
-	for i := 0; i < size; i++ {
-		p := sorted[i+offset]
-		pods = append(pods, Pod{
-			Age:      p.Age,
+	responsePods := make([]Pod, 0, endIdx-offset)
+	for i := offset; i < endIdx; i++ {
+		p := sorted[i]
+		responsePods = append(responsePods, Pod{
+			Age:      p.Age.String(),
 			Name:     p.Name,
 			Restarts: int(p.Restarts),
 		})
@@ -110,7 +109,7 @@ func listPodsResponse(params listPodsParamsWrapper, input []cluster.Pod) (ListPo
 	return ListPodsResponse{
 		Limit:  params.limit(),
 		Offset: params.offset(),
-		Pods:   pods,
+		Pods:   responsePods,
 		Total:  TotalRecords(len(input)),
 	}, nil
 }
@@ -143,7 +142,10 @@ func sortPods(input []cluster.Pod, sortParam ListPodsParamsSort) ([]cluster.Pod,
 	switch sortParam {
 	case podsListSortAge:
 		sort.Slice(input, func(i, j int) bool {
-			return input[i].Age < input[j].Age
+			if input[i].Age == input[j].Age {
+				return input[i].Name < input[j].Name
+			}
+			return input[i].Age > input[j].Age
 		})
 		return input, nil
 	case podsListSortName:
@@ -153,7 +155,10 @@ func sortPods(input []cluster.Pod, sortParam ListPodsParamsSort) ([]cluster.Pod,
 		return input, nil
 	case podsListSortRestarts:
 		sort.Slice(input, func(i, j int) bool {
-			return input[i].Restarts < input[j].Restarts
+			if input[i].Restarts == input[j].Restarts {
+				return input[i].Name < input[j].Name
+			}
+			return input[i].Restarts > input[j].Restarts
 		})
 		return input, nil
 	default:

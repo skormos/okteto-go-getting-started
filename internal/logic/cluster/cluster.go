@@ -21,7 +21,7 @@ type (
 	// Pod is a simple representation of a Pod
 	Pod struct {
 		Name     string
-		Age      string
+		Age      time.Duration
 		Restarts int32
 	}
 )
@@ -61,7 +61,7 @@ func (o *ClusterOps) ListPods(ctx context.Context, namespace string) ([]Pod, err
 
 		pods = append(pods, Pod{
 			Name:     podItem.GetName(),
-			Age:      ageDuration.String(),
+			Age:      ageDuration,
 			Restarts: restartCount,
 		})
 	}
