@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -30,11 +32,29 @@ func main() {
 		mainLogger.Panic().Err(err).Msg("while initializing ClusterOps logic")
 	}
 
+	ctx := context.Background()
+	podsMetricsCancel, err := initPodsMetricsGauge(ctx, logCtx, k8sCoreClient, "skormos", 5*time.Second)
+	defer func() {
+		podsMetricsCancel()
+	}()
+	if err != nil {
+		mainLogger.Panic().Err(err).Msg("while initializing Pods Gauge metric")
+	}
+
+	apiHandler := newAPIHandler(logCtx, clusterOps)
+	metricsHandler := newMetricsHandler()
+	pingHandler, err := newPingHandler()
+	if err != nil {
+		mainLogger.Panic().Err(err).Msg("while creating ping Handler")
+	}
+	rootHandler := newHandler(apiHandler, metricsHandler, pingHandler)
+
 	httpOptions := newHTTPServerOptions("8080")
-	httpServer := newHTTPServerWrapper(logCtx, httpOptions, apiHandler(logCtx, clusterOps), serverErrors)
+	httpServer := newHTTPServerWrapper(logCtx, httpOptions, rootHandler, serverErrors)
 
 	select {
 	case err := <-serverErrors:
+		podsMetricsCancel()
 		mainLogger.Panic().Err(err).Msg("error received from the server")
 	case sig := <-shutdown:
 		if syscall.SIGSTOP == sig {

@@ -9,6 +9,6 @@ import (
 	"github.com/okteto/go-getting-started/internal/logic/cluster"
 )
 
-func apiHandler(logCtx zerolog.Context, clusterOps *cluster.ClusterOps) http.Handler {
+func newAPIHandler(logCtx zerolog.Context, clusterOps *cluster.ClusterOps) http.Handler {
 	return api.New(logCtx, clusterOps)
 }

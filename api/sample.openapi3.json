@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080"
+      "url": "http://localhost:8080/api"
     }
   ],
   "components": {
@@ -114,7 +114,7 @@
     }
   },
   "paths": {
-    "/api/hello": {
+    "/hello": {
       "get": {
         "summary": "Says hello to whomever you provide in the query parameter.",
         "description": "Allows callers to get a pleasant greeting as a response with the name provided in the query or default World if not provided.",
@@ -140,7 +140,7 @@
         }
       }
     },
-    "/api/cluster/{namespace}/pod": {
+    "/cluster/{namespace}/pod": {
       "get": {
         "summary": "List the pods in this namespace.",
         "description": "List the pods that are in the same namespace as the app that was deployed",

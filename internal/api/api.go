@@ -29,6 +29,8 @@ func New(logCtx zerolog.Context, podsLister PodsLister) http.Handler {
 		apiPodsGetter: newPodsHandler(logCtx, podsLister),
 	}
 
+	//nolint:godox // ignoring task comments for linting
+	// FIXME Middleware: CORS, RequestLogger, etc.
 	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter:  chi.NewRouter(),
 		Middlewares: nil,

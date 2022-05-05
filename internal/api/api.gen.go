@@ -78,10 +78,10 @@ type SayHelloParams struct {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// List the pods in this namespace.
-	// (GET /api/cluster/{namespace}/pod)
+	// (GET /cluster/{namespace}/pod)
 	ListPods(w http.ResponseWriter, r *http.Request, namespace NamespacePath, params ListPodsParams)
 	// Says hello to whomever you provide in the query parameter.
-	// (GET /api/hello)
+	// (GET /hello)
 	SayHello(w http.ResponseWriter, r *http.Request, params SayHelloParams)
 }
 
@@ -301,10 +301,10 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/cluster/{namespace}/pod", wrapper.ListPods)
+		r.Get(options.BaseURL+"/cluster/{namespace}/pod", wrapper.ListPods)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/hello", wrapper.SayHello)
+		r.Get(options.BaseURL+"/hello", wrapper.SayHello)
 	})
 
 	return r
